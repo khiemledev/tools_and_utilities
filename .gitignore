@@ -1,4 +1,9 @@
 *.mp4
+*.jpg
+*.jpeg
+*.png
+video_frames/
+video_moving_obj/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

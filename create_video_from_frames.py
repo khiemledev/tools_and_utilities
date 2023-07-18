@@ -3,11 +3,11 @@ from pathlib import Path
 
 
 def main():
-    frames_dir = Path("../StreamingVideo/video_frames")
+    frames_dir = Path("./video_moving_obj")
     output_path = Path("./output.mp4")
 
-    frame_size = (640, 480)
-    fps = 5
+    frame_size = (640 * 4, 480 * 4)
+    fps = 3
 
     # Define the codec and create VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')

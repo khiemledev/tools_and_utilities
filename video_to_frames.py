@@ -6,8 +6,12 @@ def main():
     video_path = Path('../StreamingVideo/live.mp4')
     output_dir = Path('video_frames/')
 
-    skip_frame = 0 # 0 mean no skip
-    max_frames = 220 # 0 mean no limit
+    # Remove all file in output directory
+    for file in output_dir.glob('*'):
+        file.unlink()
+
+    skip_frame = 8 # 0 mean no skip
+    max_frames = 200 # 0 mean no limit
 
     # Create output directory if it doesn't exist
     output_dir.mkdir(parents=True, exist_ok=True)
