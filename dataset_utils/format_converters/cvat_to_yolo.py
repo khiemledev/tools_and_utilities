@@ -184,7 +184,7 @@ def convert_cvat_to_yolo_ultralytics(
         keys = list(all_images.keys())
         prev = 0
         for subset, ratio in split_ratio.items():
-            split_size = int(len(all_images) * ratio)
+            split_size = round(len(all_images) * ratio)
 
             for key in keys[prev : prev + split_size]:
                 all_images[key]["subset"] = subset
@@ -217,8 +217,6 @@ def convert_cvat_to_yolo_ultralytics(
         else:
             if subset_map and subset in subset_map:
                 new_subset = subset_map[subset]
-
-        subsets.add(new_subset)
 
         # Make subdir for each subset
         subset_img_src_dir = src_dir / "images" / img["subset"]

@@ -104,6 +104,7 @@ def read_cvat_annotation_xml(xml_path: StrPath) -> dict:
                     "top": annot_top,
                     "width": annot_right - annot_left,
                     "height": annot_bottom - annot_top,
+                    "subset": img_subset,
                 }
             )
 
