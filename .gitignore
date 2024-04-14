@@ -1,5 +1,7 @@
 data/
 *.zip
+*.pt
+*.cache
 
 *.mp4
 *.jpg
