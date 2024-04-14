@@ -1,9 +1,10 @@
 import datetime as dt
 import json
 import shutil
-import xml.etree.ElementTree as ET
 from argparse import ArgumentParser
 from pathlib import Path
+
+from cvat_utils import read_cvat_annotation_xml
 
 StrPath = str | Path
 
@@ -27,131 +28,24 @@ def get_args():
         action="store_true",
         help="Overwrite existing output directory",
     )
+
+    # arguments to map subsets. Example --subset-map Train:train --subset-map Test:test
+    parser.add_argument(
+        "--subset-map",
+        type=str,
+        action="append",
+        help="Map subset names to new subset names",
+        default=[],
+    )
+
     return parser.parse_args()
-
-
-def read_cvat_annotation_xml(xml_path: StrPath) -> dict:
-    """Read
-
-    Args:
-        src_dir (StrPath): _description_
-        output_dir (StrPath): _description_
-
-    Raises:
-        ValueError: _description_
-        ValueError: _description_
-        ValueError: _description_
-
-    Returns:
-        dict: _description_
-    """
-
-    xml_path = Path(xml_path)
-
-    if not xml_path.exists():
-        raise ValueError(f"Annotation XML file does not exist: {xml_path}")
-
-    tree = ET.parse(str(xml_path))
-    root = tree.getroot()
-
-    # Read project metadata
-    project_meta_el = root.find("./meta/project")
-    project_name = project_meta_el.find("name").text
-    subsets = project_meta_el.find("subsets").text.split("\n")
-
-    # Read labels of the project
-    labels = []
-    label_els = project_meta_el.find("labels")
-    for label in label_els.findall("label"):
-        label_name = label.find("name").text
-        label_type = label.find("type").text
-        label_color = label.find("color").text
-
-        labels.append(
-            {
-                "name": label_name,
-                "type": label_type,
-                "color": label_color,
-            }
-        )
-
-    # Read tasks of the project
-    tasks = []
-    task_els = project_meta_el.find("tasks").findall("task")
-    for task in task_els:
-        task_id = int(task.find("id").text)
-        task_name = task.find("name").text
-        task_subset = task.find("subset").text
-        task_size = int(task.find("size").text)
-
-        tasks.append(
-            {
-                "id": task_id,
-                "name": task_name,
-                "subset": task_subset,
-                "size": task_size,
-            }
-        )
-
-    # Read all images element and its attributes
-    image_els = root.findall("./image")
-    images = []
-    annotations = []
-    for image_el in image_els:
-        img_id = int(image_el.get("id"))
-        img_name = image_el.get("name")
-        img_subset = image_el.get("subset")
-        img_width = int(image_el.get("width"))
-        img_height = int(image_el.get("height"))
-        img_task_id = int(image_el.get("task_id"))
-
-        images.append(
-            {
-                "id": img_id,
-                "file_name": img_name,
-                "width": img_width,
-                "height": img_height,
-                "subset": img_subset,
-                "task_id": img_task_id,
-            }
-        )
-
-        # Read all annotations of current image
-        annotation_els = image_el.findall("./box")
-        for annot in annotation_els:
-            annot_label = annot.get("label")
-            annot_left = float(annot.get("xtl"))
-            annot_top = float(annot.get("ytl"))
-            annot_right = float(annot.get("xbr"))
-            annot_bottom = float(annot.get("ybr"))
-
-            annotations.append(
-                {
-                    "image_id": img_id,
-                    "label": annot_label,
-                    "left": annot_left,
-                    "top": annot_top,
-                    "width": annot_right - annot_left,
-                    "height": annot_bottom - annot_top,
-                }
-            )
-
-    result = {
-        "project_name": project_name,
-        "subsets": subsets,
-        "labels": labels,
-        "tasks": tasks,
-        "images": images,
-        "annotations": annotations,
-    }
-
-    return result
 
 
 def convert_cvat_to_coco(
     src_dir: StrPath,
     output_dir: StrPath,
     force: bool = False,
+    subset_map: dict[str, str] | None = None,
 ):
     """Convert dataset from CVAT for images format to COCO format
 
@@ -161,7 +55,9 @@ def convert_cvat_to_coco(
 
     Args:
         src_dir (StrPath): directory of the CVAT dataset
-        output_dir (StrPath): directory of the output COCO dataset
+        output_dir (StrPath): directory of the output COCO dataset.
+        force (bool, optional): Overwrite existing output directory. Defaults to False.
+        subset_map (dict[str, str], optional): Map subset names to new subset names. Defaults to None.
     """
 
     src_dir = Path(src_dir)
@@ -181,6 +77,14 @@ def convert_cvat_to_coco(
 
     annot_data = read_cvat_annotation_xml(src_dir / "annotations.xml")
 
+    # Validate subset map if provided
+    if subset_map:
+        for src, target in subset_map.items():
+            if src not in annot_data["subsets"]:
+                raise ValueError(f"Subset '{src}' does not exist in CVAT dataset")
+            if target in annot_data["subsets"]:
+                raise ValueError(f"Subset '{target}' already exists in CVAT dataset")
+
     # Get image path using 'images' in annot_data and check existence
     for img in annot_data["images"]:
         img_path = src_dir / "images" / img["subset"] / img["file_name"]
@@ -193,10 +97,6 @@ def convert_cvat_to_coco(
     out_annots_dir = output_dir / "annotations"
     out_imgs_dir.mkdir(parents=True, exist_ok=False)
     out_annots_dir.mkdir(parents=True, exist_ok=False)
-
-    # Create subset for images
-    for subset in annot_data["subsets"]:
-        (out_imgs_dir / subset).mkdir(parents=True, exist_ok=True)
 
     # Get categories for annotations, this was used consistently accross all subsets
     categories = []
@@ -228,6 +128,11 @@ def convert_cvat_to_coco(
             "categories": categories,
         }
 
+        # map to new subset if provided
+        new_subset = subset
+        if subset_map and subset in subset_map:
+            new_subset = subset_map[subset]
+
         # Get images for each subset
         imgs = [img for img in annot_data["images"] if img["subset"] == subset]
         images = []
@@ -242,7 +147,7 @@ def convert_cvat_to_coco(
             )
 
         subset_img_src_dir = src_dir / "images" / img["subset"]
-        subset_img_dst_dir = out_imgs_dir / subset
+        subset_img_dst_dir = out_imgs_dir / new_subset
 
         shutil.copytree(subset_img_src_dir, subset_img_dst_dir, dirs_exist_ok=True)
 
@@ -289,7 +194,7 @@ def convert_cvat_to_coco(
         annot_result["annotations"] = annotations
 
         # Write to file
-        annot_file_name = "instances_{}.json".format(subset)
+        annot_file_name = "instances_{}.json".format(new_subset)
         with open(out_annots_dir / annot_file_name, "w") as f:
             json.dump(annot_result, f, indent=2)
 
@@ -297,10 +202,18 @@ def convert_cvat_to_coco(
 def main():
     args = get_args()
 
+    subset_map = {}
+    for _map in args.subset_map:
+        k, v = _map.split(":")
+        subset_map[k] = v
+
+    print(subset_map)
+
     convert_cvat_to_coco(
         src_dir=args.src,
         output_dir=args.output,
         force=args.force,
+        subset_map=subset_map,
     )
 
 
