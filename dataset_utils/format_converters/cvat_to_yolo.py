@@ -175,7 +175,7 @@ def convert_cvat_to_yolo_ultralytics(
                 "bbox": xywh2yolo(x, y, width, height, imw, imh),
             }
 
-            all_images[f"{annot["image_id"]}_{subset}"]["annotations"].append(
+            all_images[f"{annot['image_id']}_{subset}"]["annotations"].append(
                 annotations[annot["image_id"]],
             )
 
@@ -190,7 +190,6 @@ def convert_cvat_to_yolo_ultralytics(
                 all_images[key]["subset"] = subset
 
             prev += split_size
-
 
     # Get the new subsets if split_ratio or subset_map is provided
     subsets = set(annot_data["subsets"])
