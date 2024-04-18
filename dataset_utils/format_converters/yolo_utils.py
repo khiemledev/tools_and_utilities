@@ -145,7 +145,7 @@ def validate_dataset_folder(data_yml: dict, root_dir: StrPath) -> dict:
                     img_path = root_dir / img_path
 
                     txt_path = Path(
-                        str(img_path).replace("/images/", "/labels/")
+                        img_path.as_posix().replace("/images/", "/labels/")
                     ).with_suffix(".txt")
                     if not txt_path.exists():
                         raise ValueError(f"Label file {txt_path} not found")
@@ -195,7 +195,7 @@ def validate_dataset_folder(data_yml: dict, root_dir: StrPath) -> dict:
             # For each image, check label in txt file and append labels to result
             for img_path in img_paths:
                 txt_path = Path(
-                    str(img_path).replace("/images/", "/labels/")
+                    img_path.as_posix().replace("/images/", "/labels/")
                 ).with_suffix(".txt")
                 if not txt_path.exists():
                     raise ValueError(f"Label file {txt_path} not found")

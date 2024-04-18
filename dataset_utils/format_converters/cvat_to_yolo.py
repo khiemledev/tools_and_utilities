@@ -1,3 +1,13 @@
+import os
+import sys
+
+# Get the current directory
+current_dir = os.getcwd()  # Use os.getcwd() instead of %cd%
+
+# Add the current directory to the search path
+sys.path.append(current_dir)
+
+
 import random
 import shutil
 from argparse import ArgumentParser
@@ -5,22 +15,7 @@ from pathlib import Path
 
 import yaml
 from cvat_utils import read_cvat_annotation_xml
-
-
-def xywh2yolo(
-    x1: int,
-    y1: int,
-    box_w: int,
-    box_h: int,
-    img_w: int,
-    img_h: int,
-) -> tuple[float, float, float, float]:
-    x_center = (x1 + box_w / 2) / img_w
-    y_center = (y1 + box_h / 2) / img_h
-    w = box_w / img_w
-    h = box_h / img_h
-    return x_center, y_center, w, h
-
+from utils.bbox_utils import xywh2yolo
 
 StrPath = str | Path
 

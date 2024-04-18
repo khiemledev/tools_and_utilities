@@ -1,3 +1,13 @@
+import os
+import sys
+
+# Get the current directory
+current_dir = os.getcwd()  # Use os.getcwd() instead of %cd%
+
+# Add the current directory to the search path
+sys.path.append(current_dir)
+
+
 import datetime as dt
 import shutil
 import xml.etree.ElementTree as ET
