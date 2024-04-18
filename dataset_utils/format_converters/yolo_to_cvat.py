@@ -44,12 +44,12 @@ def get_args():
     return parser.parse_args()
 
 
-def convert_yolo_ultralytics_cvat(
+def convert_yolo_ultralytics_to_cvat(
     src_dir: StrPath,
     output_dir: StrPath,
     force: bool = False,
 ):
-    """Convert dataset from to YOLO Ultralytics format CVAT for images format
+    """Convert dataset from YOLO Ultralytics format to CVAT for images format
 
     References:
         - https://docs.ultralytics.com/datasets/detect/
@@ -163,7 +163,7 @@ def convert_yolo_ultralytics_cvat(
 def main():
     args = get_args()
 
-    convert_yolo_ultralytics_cvat(
+    convert_yolo_ultralytics_to_cvat(
         src_dir=args.src,
         output_dir=args.output,
         force=args.force,
