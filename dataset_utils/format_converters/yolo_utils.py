@@ -18,6 +18,12 @@ def read_data_yaml(path: StrPath) -> dict:
 
     Returns:
         dict: data inside data.yaml
+
+        {
+            "nc": int - number of classes,
+            "names": list[str] - list of class names
+            "<subset>": str
+        }
     """
 
     path = Path(path)
@@ -62,7 +68,7 @@ def validate_dataset_folder(data_yml: dict, root_dir: StrPath) -> dict:
             "<subset>": [
                 {
                     "image": <path_to_image>,
-                    "label": [
+                    "labels": [
                         [cls_id, xcn, ycn, bwn, bhn],
                         ...
                     ],
