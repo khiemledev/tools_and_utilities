@@ -55,8 +55,8 @@ def convert_yolo_ultralytics_to_cvat(
         - https://docs.ultralytics.com/datasets/detect/
 
     Args:
-        src_dir (StrPath): directory of the CVAT dataset
-        output_dir (StrPath): directory of the output YOLO Ultralytics dataset
+        src_dir (StrPath): directory of the YOLO Ultralytics dataset
+        output_dir (StrPath): directory of the output dataset
         force (bool, optional): Overwrite existing output directory. Defaults to False.
     """  # noqa: E501
 
