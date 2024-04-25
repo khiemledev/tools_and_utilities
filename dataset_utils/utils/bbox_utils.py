@@ -43,3 +43,14 @@ def yolo2xywh(
     w = x2 - x1
     y = y2 - y1
     return x1, y1, w, y
+
+
+def xywh2xyxy(
+    x1: int,
+    y1: int,
+    box_w: int,
+    box_h: int,
+) -> tuple[float, float, float, float]:
+    x2 = x1 + box_w
+    y2 = y1 + box_h
+    return x1, y1, x2, y2
