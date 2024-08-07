@@ -2,6 +2,7 @@ data/
 *.zip
 *.pt
 *.cache
+*.txt
 
 *.mp4
 *.jpg

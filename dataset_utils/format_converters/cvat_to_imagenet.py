@@ -12,6 +12,7 @@ import random
 import shutil
 from argparse import ArgumentParser
 from pathlib import Path
+from pprint import pprint
 
 import yaml
 from cvat_utils import read_cvat_annotation_xml
@@ -61,21 +62,18 @@ def get_args():
     return parser.parse_args()
 
 
-def convert_cvat_to_yolo_ultralytics(
+def convert_cvat_to_imagenet(
     src_dir: StrPath,
     output_dir: StrPath,
     force: bool = False,
     subset_map: dict[str, str] | None = None,
     split_ratio: dict[str, float] | None = None,
 ):
-    """Convert dataset from CVAT for images format to YOLO Ultralytics format
-
-    References:
-        - https://docs.ultralytics.com/datasets/detect/
+    """Convert dataset from CVAT for images format to ImageNet format
 
     Args:
         src_dir (StrPath): directory of the CVAT dataset
-        output_dir (StrPath): directory of the output YOLO Ultralytics dataset
+        output_dir (StrPath): directory of the output ImageNet dataset
         force (bool, optional): Overwrite existing output directory. Defaults to False.
         subset_map (dict[str, str], optional): Map subset names to new subset names. Defaults to None.
         split_ratio (dict[str, float], optional): Split dataset into subsets and specify the ratio of each subset. Defaults to None.
@@ -111,13 +109,6 @@ def convert_cvat_to_yolo_ultralytics(
                 raise ValueError(f"Subset '{src}' does not exist in CVAT dataset")
             if target in annot_data["subsets"]:
                 raise ValueError(f"Subset '{target}' already exists in CVAT dataset")
-
-    # Create output directory
-    # Create images and annotations folder
-    out_imgs_dir = output_dir / "images"
-    out_annots_dir = output_dir / "labels"
-    out_imgs_dir.mkdir(parents=True, exist_ok=False)
-    out_annots_dir.mkdir(parents=True, exist_ok=False)
 
     # Get categories for annotations, this was used consistently accross all subsets
     name2id = {}
@@ -156,18 +147,14 @@ def convert_cvat_to_yolo_ultralytics(
         ]
         annotations: dict[int, dict] = {}  # image_id: data
         for annot in annots:
-            x = annot["left"]
-            y = annot["top"]
-            width = annot["width"]
-            height = annot["height"]
+            label = annot["label"]
 
-            img_data = images[annot["image_id"]]
-            imw = img_data["width"]
-            imh = img_data["height"]
+            # img_data = images[annot["image_id"]]
+            # imw = img_data["width"]
+            # imh = img_data["height"]
 
             annotations[annot["image_id"]] = {
-                "cls_id": name2id[annot["label"]],
-                "bbox": xywh2yolo(x, y, width, height, imw, imh),
+                "label": label,
             }
 
             all_images[f"{annot['image_id']}_{subset}"]["annotations"].append(
@@ -200,6 +187,8 @@ def convert_cvat_to_yolo_ultralytics(
                 subsets.remove(src)
                 subsets.add(target)
 
+    print("Total images:", len(all_images))
+
     # Copy images and write annotations to file
     for key, data in all_images.items():
         img_id, subset = key.split("_")
@@ -223,26 +212,14 @@ def convert_cvat_to_yolo_ultralytics(
 
         # Make subdir for each subset
         subset_img_src_dir = src_dir / "images" / img["subset"]
-        subset_img_dst_dir = out_imgs_dir / new_subset
-        subset_annot_dst_dir = out_annots_dir / new_subset
+        subset_img_dst_dir = output_dir / new_subset
 
-        subset_img_dst_dir.mkdir(parents=True, exist_ok=True)
-        subset_annot_dst_dir.mkdir(parents=True, exist_ok=True)
-
-        # Write annotations for each image
-        # Copy image
-        src_img_path = subset_img_src_dir / img["file_name"]
-        shutil.copy(str(src_img_path), str(subset_img_dst_dir / img["file_name"]))
-
-        # Write annotations to txt file
-        output_txt_file = (subset_annot_dst_dir / img["file_name"]).with_suffix(".txt")
-        with output_txt_file.open("w") as f:
-            for annot in annotations:
-                if annot["type"] != "rectangle":
-                    continue
-                f.write(
-                    f"{annot['cls_id']} {annot['bbox'][0]} {annot['bbox'][1]} {annot['bbox'][2]} {annot['bbox'][3]}\n"
-                )
+        # Write image to corresponding label dir
+        for annot in annotations:
+            img_path = subset_img_src_dir / img["file_name"]
+            output_path = subset_img_dst_dir / annot["label"] / img["file_name"]
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(img_path, output_path)
 
     # Create data.yaml file
     data_yml = {}
@@ -282,7 +259,7 @@ def main():
     if split_ratio and subset_map:
         raise ValueError("Subset map and split ratio cannot be used together")
 
-    convert_cvat_to_yolo_ultralytics(
+    convert_cvat_to_imagenet(
         src_dir=args.src,
         output_dir=args.output,
         force=args.force,

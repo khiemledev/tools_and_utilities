@@ -1,5 +1,6 @@
 import datetime as dt
 import json
+import random
 import shutil
 from argparse import ArgumentParser
 from pathlib import Path
@@ -146,7 +147,7 @@ def convert_cvat_to_coco(
         annots = [
             annot
             for annot in annot_data["annotations"]
-            if annot["image_id"] in image_ids and annot["subset"] == subset  # Image in COCO start from 1
+            if annot["image_id"] in image_ids and annot["subset"] == subset and annot["type"] == "rectangle"  # Image in COCO start from 1
         ]
 
         annotations: dict[int, dict] = {}  # image_id: data
@@ -191,16 +192,21 @@ def convert_cvat_to_coco(
             raise ValueError(f"No annotations found for image: {k}")
 
     # if split_ratio is provided, calculate size for each subset first
+    # if split_ratio is provided, calculate size for each subset first
     if split_ratio:
         keys = list(all_images.keys())
-        prev = 0
+
+        # make a list of position to split
+        split_pos = []
+
         for subset, ratio in split_ratio.items():
             split_size = round(len(all_images) * ratio)
+            split_pos.extend([subset] * split_size)
 
-            for key in keys[prev : prev + split_size]:
-                all_images[key]["subset"] = subset
-
-            prev += split_size
+        # shuffle the list
+        random.shuffle(split_pos)
+        for key in keys:
+            all_images[key]["subset"] = split_pos.pop()
 
     # copy images to output directory
     for subset in annot_data["subsets"]:

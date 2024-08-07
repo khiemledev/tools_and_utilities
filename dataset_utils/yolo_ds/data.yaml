@@ -1,0 +1,15 @@
+val: ./images/val
+train: ./images/train
+nc: 11
+names:
+  0: biker
+  1: car
+  2: pedestrian
+  3: trafficLight
+  4: trafficLight-Green
+  5: trafficLight-GreenLeft
+  6: trafficLight-Red
+  7: trafficLight-RedLeft
+  8: trafficLight-Yellow
+  9: trafficLight-YellowLeft
+  10: truck

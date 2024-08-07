@@ -87,7 +87,7 @@ def read_cvat_annotation_xml(xml_path: StrPath) -> dict:
             }
         )
 
-        # Read all annotations of current image
+        # Read all rectangle annotations of current image
         annotation_els = image_el.findall("./box")
         for annot in annotation_els:
             annot_label = annot.get("label")
@@ -100,10 +100,72 @@ def read_cvat_annotation_xml(xml_path: StrPath) -> dict:
                 {
                     "image_id": img_id,
                     "label": annot_label,
+                    "type": "rectangle",
                     "left": annot_left,
                     "top": annot_top,
                     "width": annot_right - annot_left,
                     "height": annot_bottom - annot_top,
+                    "subset": img_subset,
+                }
+            )
+
+        # Read all polygon annotations of current image
+        poly_els = image_el.findall("polygon")
+        for poly_el in poly_els:
+            annot_label = poly_el.get("label")
+
+            points = []
+            _points_attr = poly_el.get("points")
+            if _points_attr is None:
+                raise ValueError("points not found")
+
+            _points = _points_attr.split(";")
+            for _pts in _points:
+                points.extend(_pts.split(","))
+            points = list(map(float, points))
+
+            # Do convert if needed
+            # Convert to rectangle box
+            # x1 = min(points[:-1:2])
+            # y1 = min(points[1::2])
+            # x2 = max(points[:-1:2])
+            # y2 = max(points[1::2])
+
+            # convert to YOLO format (xc, yc, w, h) normalized
+            # xc = (x1 + ((x2 - x1) / 2)) / imw
+            # yc = (y1 + ((y2 - y1) / 2)) / imh
+            # w = (x2 - x1) / imw
+            # h = (y2 - y1) / imh
+
+            annotations.append(
+                {
+                    "image_id": img_id,
+                    "label": annot_label,
+                    "type": "polygon",
+                    "left": None,
+                    "top": None,
+                    "width": None,
+                    "height": None,
+                    "points": points,
+                    "subset": img_subset,
+                }
+            )
+
+        # Read all tag annotations of current image
+        tag_els = image_el.findall("tag")
+        for tag_el in tag_els:
+            annot_label = tag_el.get("label")
+
+            annotations.append(
+                {
+                    "image_id": img_id,
+                    "label": annot_label,
+                    "type": "tag",
+                    "left": None,
+                    "top": None,
+                    "width": None,
+                    "height": None,
+                    "points": None,
                     "subset": img_subset,
                 }
             )
