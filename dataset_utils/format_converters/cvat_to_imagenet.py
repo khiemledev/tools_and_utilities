@@ -194,7 +194,7 @@ def convert_cvat_to_imagenet(
         img_id, subset = key.split("_")
 
         img = data["image"]
-        annotations = data["annotations"]
+        annotations: list[dict] = data["annotations"]
 
         # skip images without annotations
         if len(annotations) == 0:
@@ -221,20 +221,6 @@ def convert_cvat_to_imagenet(
             output_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(img_path, output_path)
 
-    # Create data.yaml file
-    data_yml = {}
-    for subset in subsets:
-        data_yml[subset] = f"./images/{subset}"
-
-    data_yml.update(
-        {
-            "nc": len(name2id),
-            "names": {v: k for k, v in name2id.items()},
-        }
-    )
-
-    with open(output_dir / "data.yaml", "w") as f:
-        yaml.dump(data_yml, f, sort_keys=False)
 
 
 def main():

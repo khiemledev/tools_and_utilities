@@ -14,7 +14,7 @@ from pathlib import Path
 
 from PIL import Image
 from utils.bbox_utils import yolo2xyxy
-from yolo_utils import read_data_yaml, validate_dataset_folder
+from yolo_utils import read_yolo_data_yaml, validate_dataset_folder
 
 StrPath = str | Path
 
@@ -77,7 +77,7 @@ def convert_yolo_ultralytics_to_imagenet(
     if not data_yml_file.exists():
         raise ValueError(f"data.yaml does not exist: {data_yml_file}")
 
-    data_yml = read_data_yaml(data_yml_file)
+    data_yml = read_yolo_data_yaml(data_yml_file)
     ds_data = validate_dataset_folder(data_yml, src_dir)
 
     idx2name = {k: v for k, v in enumerate(data_yml.get("names"))}

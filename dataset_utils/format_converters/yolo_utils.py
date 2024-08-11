@@ -7,7 +7,7 @@ StrPath = str | Path
 SUPPORTED_IMG_EXTS = ("jpg", "jpeg", "png")
 
 
-def read_data_yaml(path: StrPath) -> dict:
+def read_yolo_data_yaml(path: StrPath) -> dict:
     """Read data inside data.yaml file and return a dictionary
 
     Args:
