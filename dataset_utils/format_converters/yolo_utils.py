@@ -54,12 +54,13 @@ def read_yolo_data_yaml(path: StrPath) -> dict:
     return data
 
 
-def validate_dataset_folder(data_yml: dict, root_dir: StrPath) -> dict:
+def validate_dataset_folder(data_yml: dict, root_dir: StrPath, skip_missing: False) -> dict:
     """_summary_
 
     Args:
         data_yml (dict): data inside yaml file
         root_dir (StrPath): path to dataset directory
+        skip_missing (bool, optional): skip missing images. Defaults to False.
 
     Raises:
         ValueError: description about the error
@@ -204,7 +205,10 @@ def validate_dataset_folder(data_yml: dict, root_dir: StrPath) -> dict:
                     img_path.as_posix().replace("/images/", "/labels/")
                 ).with_suffix(".txt")
                 if not txt_path.exists():
-                    raise ValueError(f"Label file {txt_path} not found")
+                    if not skip_missing:
+                        raise ValueError(f"Label file {txt_path} not found")
+
+                    continue
 
                 with txt_path.open("r") as f:
                     labels = [l.strip().split(" ") for l in f if l.strip() != ""]
