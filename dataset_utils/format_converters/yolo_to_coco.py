@@ -86,7 +86,7 @@ def convert_yolo_ultralytics_to_coco(
     if not data_yml_file.exists():
         raise ValueError(f"data.yaml does not exist: {data_yml_file}")
 
-    data_yml = read_data_yaml(data_yml_file)
+    data_yml = read_yolo_data_yaml(data_yml_file)
     ds_data = validate_dataset_folder(data_yml, src_dir, skip_missing)
 
     print(data_yml)
